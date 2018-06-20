@@ -1,15 +1,21 @@
 from flask import Flask, Response, jsonify, request, redirect, url_for, g
 from jinja2 import Template
 from . import settings
-import bcdc
-import emailer
+from .bcdc import package_id_to_web_url, prepare_package_name, package_create, resource_create
+from .emailer import send_email
 import os
 import json
 import requests
 import logging
-
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+#In debug mode add CORS headers to responses. (When not in debug mode, it is 
+#assumed that CORS headers will be controlled externally, such as by a reverse
+#proxy)
+if "FLASK_DEBUG" in os.environ and os.environ["FLASK_DEBUG"]:
+  CORS(app)
 
 #setup logging
 app.logger.setLevel(getattr(logging, settings.LOG_LEVEL)) #main logger's level
@@ -23,7 +29,7 @@ app.logger.info("Log level is '{}'".format(settings.LOG_LEVEL))
 # Constants
 #------------------------------------------------------------------------------
 
-API_SPEC_FILENAME = os.path.join(app.root_path, "..\\docs\\argg-api.openapi3.json")
+API_SPEC_FILENAME = os.path.join(app.root_path, "../docs/argg-api.openapi3.json")
 
 #------------------------------------------------------------------------------
 # API Endpoints
@@ -75,12 +81,12 @@ def register():
       #add info about the new metadata record to the response
       success_resp["new_metadata_record"] = {
         "id": package["id"],
-        "web_url": bcdc.package_id_to_web_url(package["id"]),
-        "api_url": bcdc.package_id_to_web_url(package["id"])
+        "web_url": package_id_to_web_url(package["id"]),
+        "api_url": package_id_to_web_url(package["id"])
       }
     except ValueError as e: #perhaps other errors are possible too??  if so, catch those too
       app.logger.error("Unable to create metadata record in the BC Data Catalog. {}".format(e))
-      return jsonify({"msg": "Unable to create metadata record in the BC Data Catalog. {}"}), 500
+      return jsonify({"msg": "Unable to create metadata record in the BC Data Catalog."}), 500
   
     try:
       create_api_root_resource(package["id"], req_data)
@@ -109,16 +115,18 @@ def clean_and_validate_req_data(req_data):
   #ensure req_data folder hierarchy exists
   if not req_data:
     req_data = {}
+  if not req_data.get("submitted_by_person"):
+    req_data["submitted_by_person"] = {}
   if not req_data.get("metadata_details"):
     req_data["metadata_details"] = {}
   if not req_data["metadata_details"].get("owner"):
     req_data["metadata_details"]["owner"] = {}
+  if not req_data["metadata_details"]["owner"].get("contact_person"):
+    req_data["metadata_details"]["owner"]["contact_person"] = {}
   if not req_data["metadata_details"].get("security"):
     req_data["metadata_details"]["security"] = {}
   if not req_data["metadata_details"].get("license"):
     req_data["metadata_details"]["license"] = {}
-  if not req_data["metadata_details"].get("submitted_by_person"):
-    req_data["metadata_details"]["submitted_by_person"] = {}
   if not req_data.get("existing_api"):
     req_data["existing_api"] = {}
   if not req_data.get("gateway"):
@@ -134,7 +142,12 @@ def clean_and_validate_req_data(req_data):
     raise ValueError("Missing '$.metadata_details.owner.org_id'")
   if not req_data["metadata_details"]["owner"].get("sub_org_id"):
     raise ValueError("Missing '$.metadata_details.owner.sub_org_id'")  
-  
+
+  if not req_data["metadata_details"]["owner"]["contact_person"].get("name"):
+    raise ValueError("Missing '$.metadata_details.owner.contact_person.name'")
+  if not req_data["metadata_details"]["owner"]["contact_person"].get("business_email"):
+    raise ValueError("Missing '$.metadata_details.owner.contact_person.business_email'") 
+
   if not req_data["metadata_details"]["security"].get("download_audience"):
     raise ValueError("Missing '$.metadata_details.security.download_audience'")
   if not req_data["metadata_details"]["security"].get("view_audience"):
@@ -147,20 +160,18 @@ def clean_and_validate_req_data(req_data):
   if not req_data["metadata_details"]["license"].get("license_id"):
     raise ValueError("Missing '$.metadata_details.license.license_id'")
 
-  if not req_data["metadata_details"]["submitted_by_person"].get("name"):
-    raise ValueError("Missing '$.metadata_details.submitted_by_person.name'")
-  if not req_data["metadata_details"]["submitted_by_person"].get("org_id"):
-    raise ValueError("Missing '$.metadata_details.submitted_by_person.org_id'")
-  if not req_data["metadata_details"]["submitted_by_person"].get("sub_org_id"):
-    raise ValueError("Missing '$.metadata_details.submitted_by_person.sub_org_id'")
-  if not req_data["metadata_details"]["submitted_by_person"].get("business_email"):
-    raise ValueError("Missing '$.metadata_details.submitted_by_person.business_email'")
+  if not req_data["submitted_by_person"].get("name"):
+    raise ValueError("Missing '$.submitted_by_person.name'")
+  if not req_data["submitted_by_person"].get("org_id"):
+    raise ValueError("Missing '$.submitted_by_person.org_id'")
+  if not req_data["submitted_by_person"].get("business_email"):
+    raise ValueError("Missing '$.submitted_by_person.business_email'")
 
   if not req_data["existing_api"].get("base_url"):
     raise ValueError("Missing '$.existing_api.base_url'")
 
-  if not req_data["gateway"].get("use_gateway"):
-    raise ValueError("Missing '$.gateway.use_gateway'")
+#  if not req_data["gateway"].get("use_gateway"):
+#    raise ValueError("Missing '$.gateway.use_gateway'")
 
   #clean fields
   req_data["metadata_details"]["title"] = req_data["metadata_details"]["title"].title()
@@ -174,10 +185,10 @@ def create_package(req_data):
   """
   package_dict = {
     "title": req_data["metadata_details"].get("title"),
-    "name": bcdc.prepare_package_name(req_data["metadata_details"].get("title")),
+    "name": prepare_package_name(req_data["metadata_details"].get("title")),
     "org": req_data["metadata_details"]["owner"].get("org_id"),
-    "sub_org": req_data["metadata_details"]["owner"].get("sub_org_id"),
-    "owner_org": req_data["metadata_details"]["owner"].get("sub_org_id"),
+    "sub_org": req_data["metadata_details"]["owner"].get("sub_org_id", settings.DEFAULT_ORG_ID),
+    "owner_org": req_data["metadata_details"]["owner"].get("sub_org_id", settings.DEFAULT_SUB_ORG_ID),
     "notes": req_data["metadata_details"].get("description"),
     "groups": [{"id" : settings.BCDC_GROUP_ID}],
     "state": "active",
@@ -196,17 +207,17 @@ def create_package(req_data):
 #    "license_url": "http://www2.gov.bc.ca/gov/content/home/copyright", #auto added if license_id is specified
     "contacts": [
       {
-        "name": req_data["metadata_details"]["submitted_by_person"].get("name"),
-        "organization": req_data["metadata_details"]["submitted_by_person"].get("org_id"),
-        "branch": req_data["metadata_details"]["submitted_by_person"].get("sub_org_id"),
-        "email": req_data["metadata_details"]["submitted_by_person"].get("business_email"),
-        "role": req_data["metadata_details"]["submitted_by_person"].get("role", "pointOfContact"),
-        "private": req_data["metadata_details"]["submitted_by_person"].get("private", "Display")
+        "name": req_data["metadata_details"]["owner"]["contact_person"].get("name"),
+        "organization": req_data["metadata_details"]["owner"]["contact_person"].get("org_id", settings.DEFAULT_ORG_ID),
+        "branch": req_data["metadata_details"]["owner"]["contact_person"].get("sub_org_id", settings.DEFAULT_SUB_ORG_ID),
+        "email": req_data["metadata_details"]["owner"]["contact_person"].get("business_email"),
+        "role": req_data["metadata_details"]["owner"]["contact_person"].get("role", "pointOfContact"),
+        "private": req_data["metadata_details"]["owner"]["contact_person"].get("private", "Display")
       }
     ]
   }
 
-  package = bcdc.package_create(package_dict, api_key=settings.BCDC_API_KEY)
+  package = package_create(package_dict, api_key=settings.BCDC_API_KEY)
   app.logger.debug("Created metadata record: {}".format(settings.TARGET_EMAIL_ADDRESSES))
   return package
 
@@ -233,7 +244,7 @@ def create_api_root_resource(package_id, req_data):
     "format": format, 
     "name": "API root"
   }
-  resource = bcdc.resource_create(resource_dict, api_key=settings.BCDC_API_KEY)
+  resource = resource_create(resource_dict, api_key=settings.BCDC_API_KEY)
   return resource
 
 def create_api_spec_resource(package_id, req_data):
@@ -253,7 +264,7 @@ def create_api_spec_resource(package_id, req_data):
       "format": "openapi-json",
       "name": "API specification"
     }
-    resource = bcdc.resource_create(resource_dict, api_key=settings.BCDC_API_KEY)
+    resource = resource_create(resource_dict, api_key=settings.BCDC_API_KEY)
     return resource
 
   return None
@@ -263,7 +274,7 @@ def send_notification_email(req_data, package_id):
   Sends a notification email
   """
 
-  emailer.send_email(
+  send_email(
     settings.TARGET_EMAIL_ADDRESSES, \
     email_subject="New API Registered - {}".format(req_data["metadata_details"]["title"]), \
     email_body=prepare_email_body(req_data, package_id), \
@@ -317,10 +328,10 @@ def prepare_email_body(req_data, package_id):
     <tr>
       <th>Submitted by</th>
       <td>
-        {{req_data["metadata_details"]["submitted_by_person"]["name"]}}<br/>
-        {{req_data["metadata_details"]["submitted_by_person"]["business_email"]}}<br/>
-        {{req_data["metadata_details"]["submitted_by_person"]["business_phone"]}}<br/>
-        Role: {{req_data["metadata_details"]["submitted_by_person"]["role"]}}
+        {{req_data["submitted_by_person"]["name"]}}<br/>
+        {{req_data["submitted_by_person"]["business_email"]}}<br/>
+        {{req_data["submitted_by_person"]["business_phone"]}}<br/>
+        Role: {{req_data["submitted_by_person"]["role"]}}
       </td>
     </tr>
     <tr>
@@ -359,7 +370,7 @@ def prepare_email_body(req_data, package_id):
     "req_data": req_data,
     "metadata": {
       "id": package_id,
-      "web_url": bcdc.package_id_to_web_url(package_id)
+      "web_url": package_id_to_web_url(package_id)
     }
   }
   html = template.render(params)

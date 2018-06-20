@@ -12,13 +12,27 @@
       <stringProp name="TestPlan.user_define_classpath"></stringProp>
     </TestPlan>
     <hashTree>
-      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults (localhost)" enabled="true">
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults (flask)" enabled="false">
         <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
           <collectionProp name="Arguments.arguments"/>
         </elementProp>
         <stringProp name="HTTPSampler.domain">localhost</stringProp>
         <stringProp name="HTTPSampler.port">5000</stringProp>
         <stringProp name="HTTPSampler.protocol"></stringProp>
+        <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+        <stringProp name="HTTPSampler.path"></stringProp>
+        <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+        <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+        <stringProp name="HTTPSampler.response_timeout"></stringProp>
+      </ConfigTestElement>
+      <hashTree/>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults (container)" enabled="true">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+        <stringProp name="HTTPSampler.domain">localhost</stringProp>
+        <stringProp name="HTTPSampler.port">8000</stringProp>
+        <stringProp name="HTTPSampler.protocol">http</stringProp>
         <stringProp name="HTTPSampler.contentEncoding"></stringProp>
         <stringProp name="HTTPSampler.path"></stringProp>
         <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
@@ -62,7 +76,7 @@
         <stringProp name="filename"></stringProp>
       </ResultCollector>
       <hashTree/>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="root" enabled="false">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="root" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
@@ -105,7 +119,7 @@
           <hashTree/>
         </hashTree>
       </hashTree>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="register (failure)" enabled="false">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="register (failure)" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
@@ -727,23 +741,31 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
+	&quot;submitted_by_person&quot;: {&#xd;
+		&quot;name&quot;: &quot;name&quot;,&#xd;
+		&quot;org_id&quot;: &quot;d5316a1b-2646-4c19-9671-c12231c4ec8b&quot;,&#xd;
+		&quot;sub_org_id&quot;: &quot;c1222ef5-5013-4d9a-a9a0-373c54241e77&quot;,&#xd;
+		&quot;business_email&quot;: &quot;asdf@asdf.ca&quot;,&#xd;
+		&quot;business_phone&quot;: &quot;250-323-3423&quot;,&#xd;
+		&quot;role&quot;: &quot;pointOfContact&quot;&#xd;
+	},&#xd;
 	&quot;existing_metadata_url&quot;: null,&#xd;
 	&quot;metadata_details&quot;: {&#xd;
 		&quot;title&quot;: &quot;example api 3&quot;,&#xd;
 		&quot;owner&quot;: {&#xd;
 			&quot;org_id&quot;: &quot;d5316a1b-2646-4c19-9671-c12231c4ec8b&quot;,&#xd;
-			&quot;sub_org_id&quot;: &quot;c1222ef5-5013-4d9a-a9a0-373c54241e77&quot;&#xd;
-		},&#xd;
-		&quot;description&quot;: &quot;api_desc&quot;,&#xd;
-		&quot;submitted_by_person&quot;: {&#xd;
-			&quot;name&quot;: &quot;name&quot;,&#xd;
-			&quot;org_id&quot;: &quot;d5316a1b-2646-4c19-9671-c12231c4ec8b&quot;,&#xd;
 			&quot;sub_org_id&quot;: &quot;c1222ef5-5013-4d9a-a9a0-373c54241e77&quot;,&#xd;
-			&quot;business_email&quot;: &quot;asdf@asdf.ca&quot;,&#xd;
-			&quot;business_phone&quot;: &quot;250-323-3423&quot;,&#xd;
-			&quot;role&quot;: &quot;pointOfContact&quot;, &#xd;
-			&quot;private&quot;: &quot;Display&quot;&#xd;
-		},&#xd;
+			&quot;contact_person&quot;: {&#xd;
+				&quot;name&quot;: &quot;name&quot;,&#xd;
+				&quot;org_id&quot;: &quot;d5316a1b-2646-4c19-9671-c12231c4ec8b&quot;,&#xd;
+				&quot;sub_org_id&quot;: &quot;c1222ef5-5013-4d9a-a9a0-373c54241e77&quot;,&#xd;
+				&quot;business_email&quot;: &quot;asdf@asdf.ca&quot;,&#xd;
+				&quot;business_phone&quot;: &quot;250-323-3423&quot;,&#xd;
+				&quot;role&quot;: &quot;pointOfContact&quot;, &#xd;
+				&quot;private&quot;: &quot;Display&quot;			&#xd;
+			}			&#xd;
+		},		&#xd;
+		&quot;description&quot;: &quot;api_desc&quot;,&#xd;
 		&quot;status&quot;: &quot;completed&quot;, &#xd;
 		&quot;security&quot;: {&#xd;
 			&quot;view_audience&quot;: &quot;Public&quot;, &#xd;

@@ -72,6 +72,10 @@
             "required": [          
             ],
             "properties": {
+              "submitted_by_person": {
+                "type": "object",
+                $ref: '#/components/schemas/contact_person'
+              },
               "existing_metadata_url": {
                 "type": "string"
               },
@@ -109,10 +113,6 @@
                 "type": "object",
                 $ref: '#/components/schemas/owner'
               },
-              "submitted_by_person": {
-                "type": "object",
-                $ref: '#/components/schemas/contact_person'
-              },
               "security": {
                 "type": "object",
                 $ref: '#/components/schemas/security'
@@ -135,7 +135,11 @@
               },
               "sub_org_id": {
                 "type": "string"
-              },              
+              },
+              "contact_person": {
+                "type": "object",
+                $ref: '#/components/schemas/contact_person'
+              }
             }            
           },
 
