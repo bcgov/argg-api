@@ -3,6 +3,35 @@ import requests
 import re
 from . import settings
 
+def get_organization(org_id):
+  """
+  Gets an organization given its id
+  :param org_id: the id of the organiztion to fetch
+  """
+  if not org_id:
+    return None
+
+  url = "{}{}/action/organization_show?id={}".format(settings.BCDC_BASE_URL, settings.BCDC_API_PATH, org_id)
+   
+  headers = {
+    "Content-Type": "application/json",
+  }
+  r = requests.get(url, 
+      headers=headers
+    )
+  
+  if r.status_code == 404:
+    return None
+  elif r.status_code >= 400:
+    raise ValueError("{} {}".format(r.status_code, r.text))
+  
+  #get the response object
+  response_dict = json.loads(r.text)
+  assert response_dict['success'] is True
+  organization = response_dict['result']
+
+  return organization
+
 def package_create(package_dict, api_key=None):
   """
   Creates a new package (dataset) in BCDC
@@ -20,17 +49,26 @@ def package_create(package_dict, api_key=None):
     data=json.dumps(package_dict),
     headers=headers
     )
+  
+  #A list of http codes returned by BCDC's package_create resource which correspond to errors
+  #in the input data
+  USER_INPUT_ERROR_CODES = [400, 409]
 
-  if r.status_code >= 400:
-    raise ValueError("{} {}".format(r.status_code, r.text))
+  if r.status_code >= 400 and r.status_code not in USER_INPUT_ERROR_CODES:
+    raise RuntimeError("Unable to create metadata record")
+
+  #get the response object
+  response_dict = json.loads(r.text)
+  
+  if r.status_code in USER_INPUT_ERROR_CODES:
+    error_msg = response_dict.get("error", {}).get("name")
+    if isinstance(error_msg, list):
+      error_msg = " ".join(error_msg)
+    raise ValueError("{}".format(error_msg))
 #  r.raise_for_status()
 #  print(r.text)
   
-  #get the response object
-  response_dict = json.loads(r.text)
-  assert response_dict['success'] is True
   created_package = response_dict['result']
-
   return created_package
 
 

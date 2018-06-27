@@ -29,10 +29,10 @@ The following environment variables are supported:
   #The ID of the group to add all new metadata records to
   BCDC_GROUP_ID
 
-  #The organization to specify for new metadata records (if the user hasn't specified a value)
-  DEFAULT_ORG_ID
-  #The sub-organization to specify for new metadata records (if the user hasn't specified a value)
-  DEFAULT_SUB_ORG_ID
+  #The organization to that new metadata records will be initially associated with
+  BCDC_PACKAGE_OWNER_ORG_ID
+  #The sub-organization to that new metadata records will be initially associated with
+  BCDC_PACKAGE_OWNER_SUB_ORG_ID
 
   #The SMTP server to send notification emails through.  e.g. apps.smtp.gov.bc.ca
   SMTP_SERVER

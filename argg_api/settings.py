@@ -7,8 +7,8 @@ import os
 # Defaults
 # -----------------------------------------------------------------------------
 
-DEFAULT_ORG_ID = "d5316a1b-2646-4c19-9671-c12231c4ec8b" #Ministry of Jobs, Tourism and Skills Training
-DEFAULT_SUB_ORG_ID = "c1222ef5-5013-4d9a-a9a0-373c54241e77" #DataBC
+BCDC_PACKAGE_OWNER_ORG_ID = "d5316a1b-2646-4c19-9671-c12231c4ec8b" #Ministry of Jobs, Tourism and Skills Training
+BCDC_PACKAGE_OWNER_SUB_ORG_ID = "c1222ef5-5013-4d9a-a9a0-373c54241e77" #DataBC
 
 # Load application settings from environment variables
 # -----------------------------------------------------------------------------
@@ -51,14 +51,16 @@ else:
   BCDC_GROUP_ID = os.environ['BCDC_GROUP_ID']
 
 #Default organization to list as the owner for new metadata records 
-#The default is used if no value is specified by the user
-if "DEFAULT_ORG_ID" in os.environ: #environment variable can override the default
-  DEFAULT_ORG_ID = os.environ['DEFAULT_ORG_ID']
+if not "BCDC_PACKAGE_OWNER_ORG_ID" in os.environ: 
+  raise ValueError("Missing 'BCDC_PACKAGE_OWNER_ORG_ID' environment variable.")
+else:
+  BCDC_PACKAGE_OWNER_ORG_ID = os.environ['BCDC_PACKAGE_OWNER_ORG_ID']
 
 #Default sub-organization to list as the owner for new metadata records 
-#The default is used if no value is specified by the user
-if "DEFAULT_SUB_ORG_ID" in os.environ: #environment variable can override the default
-  DEFAULT_SUB_ORG_ID = os.environ['DEFAULT_SUB_ORG_ID']
+if not "BCDC_PACKAGE_OWNER_SUB_ORG_ID" in os.environ:
+  raise ValueError("Missing 'BCDC_PACKAGE_OWNER_SUB_ORG_ID' environment variable.")
+else:
+  BCDC_PACKAGE_OWNER_SUB_ORG_ID = os.environ['BCDC_PACKAGE_OWNER_SUB_ORG_ID']
 
 #
 # Notification Emails
