@@ -40,8 +40,11 @@ def api():
   """
   Summary information about this API
   """
+  apiBaseUrl = request.url_root.rstrip("/")
+
   with open(API_SPEC_FILENAME) as f:
     s = f.read()
+    s = s.replace("${HOST}", apiBaseUrl)
     r = Response(response=s, mimetype='application/json', status=200)
     return r
 
@@ -278,11 +281,15 @@ def create_api_root_resource(package_id, req_data):
   
   #download api base url and check its content type (so we can create a 'resource' 
   #with the appropriate content type)
-  r = requests.get(req_data["existing_api"]["base_url"])
   format = "text"
-  if r.status_code < 400:
-    resource_content_type = r.headers['content-type']
-    format = content_type_to_format(resource_content_type, "text")
+  try:
+    r = requests.get(req_data["existing_api"]["base_url"])
+    if r.status_code < 400:
+      resource_content_type = r.headers['content-type']
+      format = content_type_to_format(resource_content_type, "text")
+  except requests.exceptions.ConnectionError as e:
+    app.logger.warning("Unable to access API '{}' to determine content type.".format(req_data["existing_api"]["base_url"]))
+    pass
 
   #add the "API root" resource to the package
   resource_dict = {
