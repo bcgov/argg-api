@@ -2,8 +2,8 @@
     "openapi": "3.0.0",
     "servers": [
         {
-            "url": "http://localhost:5000",
-            "description": "Dev"
+            "url": "${HOST}",
+            "description": "API"
         }
     ],
     "info": {

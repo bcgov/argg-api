@@ -40,6 +40,20 @@
         <stringProp name="HTTPSampler.response_timeout"></stringProp>
       </ConfigTestElement>
       <hashTree/>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults (delivery)" enabled="false">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+        <stringProp name="HTTPSampler.domain">argg-api-dev.pathfinder.bcgov</stringProp>
+        <stringProp name="HTTPSampler.port"></stringProp>
+        <stringProp name="HTTPSampler.protocol">http</stringProp>
+        <stringProp name="HTTPSampler.contentEncoding"></stringProp>
+        <stringProp name="HTTPSampler.path"></stringProp>
+        <stringProp name="HTTPSampler.concurrentPool">6</stringProp>
+        <stringProp name="HTTPSampler.connect_timeout"></stringProp>
+        <stringProp name="HTTPSampler.response_timeout"></stringProp>
+      </ConfigTestElement>
+      <hashTree/>
       <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
@@ -752,7 +766,7 @@
 	},&#xd;
 	&quot;existing_metadata_url&quot;: null,&#xd;
 	&quot;metadata_details&quot;: {&#xd;
-		&quot;title&quot;: &quot;example api 3&quot;,&#xd;
+		&quot;title&quot;: &quot;example api 4&quot;,&#xd;
 		&quot;owner&quot;: {&#xd;
 			&quot;org_id&quot;: &quot;d5316a1b-2646-4c19-9671-c12231c4ec8b&quot;,&#xd;
 			&quot;sub_org_id&quot;: &quot;c1222ef5-5013-4d9a-a9a0-373c54241e77&quot;,&#xd;
@@ -785,7 +799,7 @@
 			&quot;https&quot;: null,&#xd;
 			&quot;cors&quot;: null&#xd;
 		},&#xd;
-		&quot;base_url&quot;: &quot;http://apps.gov.bc.ca/pub/bcgnws&quot;,&#xd;
+		&quot;base_url&quot;: &quot;hasdf&quot;,&#xd;
 		&quot;openapi_spec_url&quot;: null&#xd;
 	},&#xd;
 	&quot;gateway&quot;: {&#xd;
@@ -1102,7 +1116,7 @@
 	},&#xd;
 	&quot;existing_metadata_url&quot;: null,&#xd;
 	&quot;metadata_details&quot;: {&#xd;
-		&quot;title&quot;: &quot;example api 3&quot;,&#xd;
+		&quot;title&quot;: &quot;example api 4&quot;,&#xd;
 		&quot;owner&quot;: {&#xd;
 			&quot;org_id&quot;: &quot;d5316a1b-2646-4c19-9671-c12231c4ec8b&quot;,&#xd;
 			&quot;sub_org_id&quot;: &quot;c1222ef5-5013-4d9a-a9a0-373c54241e77&quot;,&#xd;
