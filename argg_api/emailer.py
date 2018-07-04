@@ -1,6 +1,8 @@
 import smtplib
 from email.mime.text import MIMEText
 
+SECURE_PORTS = [465, 587]
+
 def send_email(target_email_addresses_csv, email_subject="", email_body="", smtp_server=None, smtp_port=587, from_email_address=None, from_password=None):
   """
   Sends an email
@@ -18,6 +20,8 @@ def send_email(target_email_addresses_csv, email_subject="", email_body="", smtp
     raise ValueError("precondition failed.  'from_email_address' must not be None")
   if not smtp_server:
     raise ValueError("precondition failed.  'smtp_server' must not be None")
+  
+  smtp_port = int(smtp_port)
 
   target_email_addresses = target_email_addresses_csv.split(",")
 
@@ -26,7 +30,12 @@ def send_email(target_email_addresses_csv, email_subject="", email_body="", smtp
   msg["To"] = target_email_addresses_csv
   msg["Subject"] = email_subject
 
-  s = smtplib.SMTP_SSL(smtp_server, smtp_port)
+  s = None
+  if smtp_port in SECURE_PORTS:
+    s = smtplib.SMTP_SSL(smtp_server, smtp_port)
+  else:
+    s = smtplib.SMTP(smtp_server, smtp_port)
+
   try:
     s.login(from_email_address, from_password)
   except smtplib.SMTPAuthenticationError as e:
