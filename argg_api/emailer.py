@@ -33,13 +33,13 @@ def send_email(target_email_addresses_csv, email_subject="", email_body="", smtp
   s = None
   if smtp_port in SECURE_PORTS:
     s = smtplib.SMTP_SSL(smtp_server, smtp_port)
+    try:
+      s.login(from_email_address, from_password)
+    except smtplib.SMTPAuthenticationError as e:
+      raise ValueError("Unable to login to SMPT server.  Invalid credentials")
   else:
     s = smtplib.SMTP(smtp_server, smtp_port)
 
-  try:
-    s.login(from_email_address, from_password)
-  except smtplib.SMTPAuthenticationError as e:
-    raise ValueError("Unable to login to SMPT server.  Invalid credentials")
   try:
     s.sendmail(from_email_address, target_email_addresses, msg.as_string())
   except smtplib.SMTPRecipientsRefused as e:
