@@ -350,7 +350,7 @@ def prepare_email_body(req_data, package_id):
   :param package_id: a BCDC metadata package id
   """
 
-  css_filename = "css/bootstrap.min.css"
+  css_filename = "css/bootstrap.css"
 
   owner_org = get_organization(req_data["metadata_details"]["owner"]["org_id"])
 
