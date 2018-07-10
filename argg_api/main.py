@@ -71,6 +71,9 @@ def register():
     req_data = clean_and_validate_req_data(req_data)
   except ValueError as e:
     return jsonify({"msg": "{}".format(e)}), 400
+  except RuntimeError as e:
+    app.logger.error("{}".format(e));
+    return jsonify({"msg": "An unexpected error occurred while validating the API registration request."}), 500
 
   success_resp = {}
 
@@ -223,6 +226,7 @@ def clean_and_validate_req_data(req_data):
   if not submitted_by_person_org:
     req_data["validated"]["submitted_by_person_org_name"] = req_data["submitted_by_person"].get("org_name")
 
+
   return req_data
 
 def create_package(req_data):
@@ -351,7 +355,7 @@ def prepare_email_body(req_data, package_id):
   owner_org = get_organization(req_data["metadata_details"]["owner"]["org_id"])
 
   with open(css_filename, 'r') as css_file:
-    css=css_file.read().replace('\n', '')  
+    css=css_file.read() #.replace('\n', '')  
 
   template = Template("""
   <html>

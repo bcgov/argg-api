@@ -23,7 +23,8 @@ def get_organization(org_id):
   if r.status_code == 404:
     return None
   elif r.status_code >= 400:
-    raise ValueError("{} {}".format(r.status_code, r.text))
+    raise RuntimeError("Unable to fetch organization by id from BCDC. URL was: {}".format(url))
+    #raise ValueError("HTTP {} - {}".format(r.status_code, r.text))
   
   #get the response object
   response_dict = json.loads(r.text)
