@@ -1,7 +1,7 @@
 from flask import Flask, Response, jsonify, request, redirect, url_for, g
 from jinja2 import Template
 from . import settings
-from .bcdc import package_id_to_web_url, prepare_package_name, package_create, resource_create, get_organization
+from .bcdc import package_id_to_web_url, package_id_to_api_url, prepare_package_name, package_create, resource_create, get_organization
 from .emailer import send_email
 import os
 import json
@@ -76,6 +76,7 @@ def register():
     return jsonify({"msg": "An unexpected error occurred while validating the API registration request."}), 500
 
   success_resp = {}
+  metadata_web_url = None
 
   #create a draft metadata record (if one doesn't exist yet)
   if not req_data.get("existing_metadata_url"):
@@ -85,10 +86,12 @@ def register():
       if not package:
         raise ValueError("Unknown reason")
       #add info about the new metadata record to the response
+      metadata_web_url = package_id_to_web_url(package["id"])
+      metadata_api_url = package_id_to_api_url(package["id"])
       success_resp["new_metadata_record"] = {
         "id": package["id"],
-        "web_url": package_id_to_web_url(package["id"]),
-        "api_url": package_id_to_web_url(package["id"])
+        "web_url": metadata_web_url,
+        "api_url": metadata_api_url
       }
     except ValueError as e: #user input errors cause HTTP 400
       return jsonify({"msg": "Unable to create metadata record in the BC Data Catalog. {}".format(e)}), 400
@@ -106,10 +109,14 @@ def register():
     except ValueError as e: #perhaps other errors are possible too??  if so, catch those too
       app.logger.warn("Unable to create API spec resource associated with the new metadata record. {}".format(e))
 
-    try:
-      send_notification_email(req_data, package["id"])
-    except Exception as e: #perhaps other errors are possible too??  if so, catch those too
-      app.logger.error("Unable to send notification email. {}".format(e))
+  #there is an existing metadata record
+  else:
+    metadata_web_url = req_data.get("existing_metadata_url")
+
+  try:
+    send_notification_email(req_data, metadata_web_url)
+  except Exception as e: 
+    app.logger.error("Unable to send notification email for new API. {}".format(e))
 
   return jsonify(success_resp), 200
 
@@ -343,11 +350,11 @@ def send_notification_email(req_data, package_id):
   app.logger.debug("Sent notification email to: {}".format(settings.TARGET_EMAIL_ADDRESSES))
 
 
-def prepare_email_body(req_data, package_id):
+def prepare_email_body(req_data, metadata_web_url):
   """
   Creates the body of the notification email
   :param req_data: the body of the request to /register as a dictionary
-  :param package_id: a BCDC metadata package id
+  :param metadata_web_url: a BCDC metadata record url
   """
 
   css_filename = "css/bootstrap.css"
@@ -383,7 +390,7 @@ def prepare_email_body(req_data, package_id):
     </tr>
     <tr>
       <th>Metadata record</th>
-      <td><a href="{{metadata["web_url"]}}">{{metadata["id"]}}</a></td>
+      <td><a href="{{metadata["web_url"]}}">{{metadata["web_url"]}}</a></td>
     </tr>
     <tr>
       <th>API Owner</th>
@@ -441,8 +448,8 @@ def prepare_email_body(req_data, package_id):
       <td>
         Use Gateway?:{% if req_data["gateway"].get("use_gateway") %} 
           Yes<br/>
-          {% if req_data["gateway"].get("use_throttling") != null %} Enable throttling?: {{req_data["gateway"].get("use_throttling")}} {% endif %}<br/>
-          {% if req_data["gateway"].get("restrict_access") != null %} Use API keys?: {{req_data["gateway"].get("restrict_access")}} {% endif %}<br/>
+          {% if req_data["gateway"].get("use_throttling") != None %} Enable throttling?: {{req_data["gateway"].get("use_throttling")}} {% endif %}<br/>
+          {% if req_data["gateway"].get("restrict_access") != None %} Use API keys?: {{req_data["gateway"].get("restrict_access")}} {% endif %}<br/>
           Suggested API short name?: {{req_data["gateway"].get("api_shortname", "not specified")}}
         {% else %} 
           No 
@@ -461,8 +468,7 @@ def prepare_email_body(req_data, package_id):
   params = {
     "req_data": req_data,
     "metadata": {
-      "id": package_id,
-      "web_url": package_id_to_web_url(package_id)
+      "web_url": metadata_web_url
     }
   }
   html = template.render(params)
