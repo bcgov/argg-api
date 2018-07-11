@@ -430,7 +430,7 @@ def prepare_email_body(req_data, package_id):
       <th>OpenAPI specification</th>
       <td>
         {% if req_data["existing_api"].get("openapi_spec_url") %}
-          <a href="{{req_data["existing_api"].get("openapi_spec_url")}}">{{req_data["existing_api"].get("openapi_spec_url")}}</a>
+          <a href='{{req_data["existing_api"].get("openapi_spec_url")}}'>{{req_data["existing_api"].get("openapi_spec_url")}}</a>
         {% else %}
           None
         {% endif %}
