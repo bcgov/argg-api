@@ -800,7 +800,7 @@
 			&quot;cors&quot;: null&#xd;
 		},&#xd;
 		&quot;base_url&quot;: &quot;hasdf&quot;,&#xd;
-		&quot;openapi_spec_url&quot;: null&#xd;
+		&quot;openapi_spec_url&quot;: &quot;https://raw.githubusercontent.com/bcgov/api-specs/master/bcgnws/bcgnws.json&quot;&#xd;
 	},&#xd;
 	&quot;gateway&quot;: {&#xd;
 		&quot;use_gateway&quot;: true,&#xd;
