@@ -1,0 +1,129 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: argg
+  name: argg
+spec:
+  ports:
+  - name: http-proxy
+    port: 2015
+    targetPort: 2015
+    protocol: TCP
+  - name: api-backend
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  selector:
+    app: argg
+---
+apiVersion: v1
+data:
+  argg.caddyfile: |-
+      0.0.0.0
+      log stdout
+      errors stderr
+      proxy /api http://localhost:8000 {
+      without /api
+      transparent
+      }
+      proxy /registryapi {$BCDC_API_URL} {
+      without /registryapi
+      }
+      root /srv
+kind: ConfigMap
+metadata:
+  name: www-conf
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: argg
+  labels:
+    app: argg
+spec:
+  selector:
+    matchLabels:
+      app: argg
+  serviceName: argg
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: argg
+      annotations:
+    spec:
+      initContainers:
+      - name: ui-dist
+        image: docker-registry.default.svc:5000/dbc-konga-tools/argg-ui:latest
+        command:
+          - "cp"
+          - "-r"
+          - "/var/www/argg-ui/"
+          - "/dist/int"
+        volumeMounts:
+        - mountPath: /dist
+          name: app-volume
+      containers:
+      - name: www
+        env:
+        - name: BCDC_API_URL
+          value: https://cad.data.gov.bc.ca/api/3
+        image: abiosoft/caddy:latest
+        command: ["caddy", "-quic", "-conf"]
+        args: ["/conf/Caddyfile"]
+        volumeMounts:
+        - mountPath: /conf
+          name: www-conf
+        - mountPath: /srv
+          name: app-volume
+      - name: argg-api
+        env:
+        - name: BCDC_BASE_URL
+          value: https://cad.data.gov.bc.ca
+        - name: BCDC_API_PATH
+          value: /api/3
+        - name: BCDC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: argg-bcdc.apikey
+              name: argg.keys
+        - name: BCDC_GROUP_ID
+          valueFrom:
+            secretKeyRef:
+              key: argg-bcdc.grpid
+              name: argg.keys
+        - name: BCDC_PACKAGE_OWNER_ORG_ID
+          valueFrom:
+            secretKeyRef:
+              key: argg-bcdc.orgid
+              name: argg.keys
+        - name: BCDC_PACKAGE_OWNER_SUB_ORG_ID
+          valueFrom:
+            secretKeyRef:
+              key: argg-bcdc.suborgid
+              name: argg.keys
+        - name: SMTP_SERVER
+          value: apps.smtp.gov.bc.ca
+        - name: SMTP_PORT
+          value: "25"
+        - name: FROM_EMAIL_ADDRESS
+          value: API.Register@gov.bc.ca
+        - name: TARGET_EMAIL_ADDRESSES
+          value: leo.lou@gov.bc.ca, brock@bandersgeo.ca
+        - name: FROM_EMAIL_PASSWORD
+          value: 
+        image: docker-registry.default.svc:5000/dbc-konga-tools/argg-api:latest
+        command: ["/usr/local/bin/gunicorn", "-k", "gevent", "-b", ":8000", "argg_api.main:app"]
+        imagePullPolicy: Always
+      volumes:
+      - name: www-conf
+        configMap:
+          name: www-conf
+          items:
+          - key: argg.caddyfile
+            path: Caddyfile
+      - name: app-volume
+        emptyDir: {}
+      - name: data
+        emptyDir: {}
