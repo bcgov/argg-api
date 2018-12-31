@@ -1,0 +1,24 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: argg-keys.template.yaml
+parameters:
+  - name: ARGG_BCDC_APIKEY
+    required: true
+  - name: ARGG_BCDC_GROUP_ID
+    required: true
+  - name: ARGG_BCDC_ORGID
+    required: true
+  - name: ARGG_BCDC_SUBORGID
+    required: true    
+objects:
+- apiVersion: v1
+  stringData:
+    argg-bcdc.apikey: ${ARGG_BCDC_APIKEY}
+    argg-bcdc.grpid: ${ARGG_BCDC_GROUP_ID}
+    argg-bcdc.orgid: ${ARGG_BCDC_ORGID}
+    argg-bcdc.suborgid: ${ARGG_BCDC_SUBORGID}
+  kind: Secret
+  metadata:
+    name: argg.keys
+  type: Opaque
