@@ -240,13 +240,18 @@ def create_package(req_data):
   """
   Registers a new package with BCDC
   :param req_data: the req_data of the http request to the /register resource
+  
+    "org": req_data["metadata_details"]["owner"]["contact_person"].get("org_id", settings.BCDC_PACKAGE_OWNER_ORG_ID),
+    "sub_org": req_data["metadata_details"]["owner"]["contact_person"].get("sub_org_id", settings.BCDC_PACKAGE_OWNER_SUB_ORG_ID),
+    "owner_org": req_data["metadata_details"]["owner"]["contact_person"].get("sub_org_id", settings.BCDC_PACKAGE_OWNER_SUB_ORG_ID),
+  
   """
   package_dict = {
     "title": req_data["metadata_details"].get("title"),
     "name": prepare_package_name(req_data["metadata_details"].get("title")),
-    "org": req_data["metadata_details"]["owner"]["contact_person"].get("org_id", settings.BCDC_PACKAGE_OWNER_ORG_ID),
-    "sub_org": req_data["metadata_details"]["owner"]["contact_person"].get("sub_org_id", settings.BCDC_PACKAGE_OWNER_SUB_ORG_ID),
-    "owner_org": req_data["metadata_details"]["owner"]["contact_person"].get("sub_org_id", settings.BCDC_PACKAGE_OWNER_SUB_ORG_ID),
+    "org": settings.BCDC_PACKAGE_OWNER_ORG_ID,
+    "sub_org": settings.BCDC_PACKAGE_OWNER_SUB_ORG_ID,
+    "owner_org": settings.BCDC_PACKAGE_OWNER_SUB_ORG_ID,
     "notes": req_data["metadata_details"].get("description"),
     "groups": [{"id" : settings.BCDC_GROUP_ID}],
     "state": "active",
