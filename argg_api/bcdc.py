@@ -51,6 +51,8 @@ def package_create(package_dict, api_key=None):
     headers=headers
     )
   
+  print(r.text)
+  
   #A list of http codes returned by BCDC's package_create resource which correspond to errors
   #in the input data
   USER_INPUT_ERROR_CODES = [400, 409]
